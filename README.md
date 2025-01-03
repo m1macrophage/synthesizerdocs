@@ -21,17 +21,17 @@ If you are looking to make music, these drivers are not for you.
 
 ## Status
 
-Currently working on the drivers below. Also in the process of getting them into MAME, one or two at a time.
+Currently working on the drivers below. Also in the process of getting them into MAME.
 
 | System | Digital | Digital-analog interface | Interactive layout | Full DC | Audio | In MAME? |
 |---|---|---|---|---|---|---|
 | Moog Source | Done | Far along | Done | Not planned | Not planned | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/moog/source.cpp) |
-| Moog Memorymoog | Done | Far along | Not started | Not planned | Not planned | PR pending |
+| Moog Memorymoog | Done | Far along | Not started | Not planned | Not planned | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/moog/memorymoog.cpp) |
 | Paia MIDI2CV8 | Done | Done | Done | Mostly done | N/A | No |
 | Paia Fatman | Done | Mostly done | Done | Early stage | Not planned | No (requires fix in mcs51 [bug](https://github.com/mamedev/mame/pull/13053)) |
 | Oberheim Xpander | Done | Far along | Not started | Not planned | Not planned | No |
 | Oberheim OB8 | Early stage | Early stage | Not started | Not planned | Not planned | No |
-| Oberheim DMX | Done | Done | Done | Almost Done | Far along | No |
+| Oberheim DMX | Done | Done | Done | Almost Done | Far along | PR pending |
 | Linn LM-2 (LinnDrum) | Far along | Far along | Not started | Not started | Not started | No |
 | Alesis MIDIverb | Done | N/A | Mostly done | N/A | Not started | No |
 
