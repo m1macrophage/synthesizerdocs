@@ -31,7 +31,7 @@ Currently working on the drivers below. Also in the process of getting them into
 | Paia Fatman | Done | Mostly done | Done | Early stage | Not planned | No (requires fix in mcs51 [bug](https://github.com/mamedev/mame/pull/13053)) |
 | Oberheim Xpander | Done | Far along | Not started | Not planned | Not planned | No |
 | Oberheim OB8 | Early stage | Early stage | Not started | Not planned | Not planned | No |
-| Oberheim DMX | Done | Done | Done | Almost Done | Far along | PR pending |
+| Oberheim DMX | Done | Done | Done | Almost Done | Far along | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/dmx.cpp) (no audio yet) |
 | Linn LM-2 (LinnDrum) | Far along | Far along | Not started | Not started | Not started | No |
 | Alesis MIDIverb | Done | N/A | Mostly done | N/A | Not started | No |
 
