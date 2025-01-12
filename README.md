@@ -39,5 +39,5 @@ Legend:
 * **Digital**: Documentation state of the computer(s) used to to control the synth (UI, voice control). Does not include DSPs.
 * **Digital-analog interface**: Documentation state of the analog circuitry that interacts with the *Digital* portion in some way. For example: LFOs and EGs whose state is accessed by the firmware, analog inputs and outputs, cessette I/O, autotune circuitry, etc.
 * **Interactive layout**: A functional MAME layout. Planned for all devices.
-* **Full DC**: Documentation of all sound control voltages and currents in the synthesizer, even those that do not affect the firmware. Only planned for digital-analog hybrids and simple analog synths.
+* **Full DC**: Documentation of all audio control voltages and currents in the synthesizer, even those not read by the firmware. Only planned for digital-analog hybrids and simple analog synths.
 * **Audio**: Documentation state of the audio circuitry. Planned for a few digital and digital-analog hybrid devices.
