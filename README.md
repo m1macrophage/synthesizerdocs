@@ -33,7 +33,7 @@ Currently working on the drivers below. Also in the process of getting them into
 | Oberheim OB8 | Early stage | Early stage | Not started | Not planned | Not planned | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/ob8.cpp) |
 | Oberheim DMX | Done | Done | Done | Almost Done | Far along | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/dmx.cpp) |
 | Linn LM-2 (LinnDrum) | Far along | Far along | Not started | Not started | Not started | No |
-| Alesis MIDIverb | Done | N/A | Mostly done | N/A | Not started | No |
+| Alesis MIDIverb | Done | N/A | Mostly done | N/A | In progress | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp) |
 
 Legend:
 * **Digital**: Documentation state of the computer(s) used to to control the synth (UI, voice control). Does not include DSPs.
