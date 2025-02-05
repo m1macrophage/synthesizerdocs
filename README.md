@@ -1,11 +1,11 @@
 ## Mission
 
 Document, in the form of [MAME](https://github.com/mamedev/mame) drivers[^1], the digital and
-digital-anlog internals of classic music machines.
+digital-analog internals of classic music machines.
 The focus is on digitally-controlled analog synthesizers and early digital devices.
 
 Classic analog synthesizers, such as those of the 80s, are widely recognized and respected for their sound.
-Their analog audio circuitry has been studied for decades, and a lot of information about that can be
+Their audio circuitry has been studied for decades, and a lot of information about that can be
 found online. However, people often don't realize that many "analog" synthesizers are built around bespoke digital computers.
 
 This effort aims to document the digital side of the story, and expose how the digital and analog work togeter.
