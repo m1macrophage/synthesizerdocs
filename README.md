@@ -21,19 +21,21 @@ If you are looking to make music, these drivers are not for you.
 
 ## Status
 
-Currently working on the drivers below. Also in the process of getting them into MAME.
+**Current focus**: DMX, LinnDrum.
 
-| System | Digital | Digital-analog interface | Interactive layout | Full DC | Audio | In MAME? |
-|---|---|---|---|---|---|---|
-| Moog Source | Done | Far along | Done | Not planned | Not planned | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/moog/source.cpp) |
-| Moog Memorymoog | Done | Far along | Not started | Not planned | Not planned | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/moog/memorymoog.cpp) |
-| Paia MIDI2CV8 | Done | Done | Done | Mostly done | N/A | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/paia/midi2cv8.cpp) |
-| Paia Fatman | Done | Mostly done | Done | Early stage | Not planned | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/paia/fatman.cpp) |
-| Oberheim Xpander | Done | Far along | Not started | Not planned | Not planned | No |
-| Oberheim OB8 | Early stage | Early stage | Not started | Not planned | Not planned | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/ob8.cpp) |
-| Oberheim DMX | Done | Done | Done | Mostly done | Mostly done | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/dmx.cpp) |
-| Linn LinnDrum | Far along | Far along | Early stage | Early stage | Early stage | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/linn/linndrum.cpp) |
-| Alesis MIDIverb | Done | N/A | Mostly done | N/A | Done | [Yes](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp) |
+Status of other work:
+
+| System | Digital | Digital-analog interface | Interactive layout | Full DC | Audio |
+|---|---|---|---|---|---|
+| [Moog Source](https://github.com/mamedev/mame/blob/master/src/mame/moog/source.cpp) | Done | Far along | Done | Not planned | Not planned |
+| [Moog Memorymoog](https://github.com/mamedev/mame/blob/master/src/mame/moog/memorymoog.cpp) | Done | Far along | Not started | Not planned | Not planned |
+| [Paia MIDI2CV8](https://github.com/mamedev/mame/blob/master/src/mame/paia/midi2cv8.cpp) | Done | Done | Done | Mostly done | N/A |
+| [Paia Fatman](https://github.com/mamedev/mame/blob/master/src/mame/paia/fatman.cpp) | Done | Mostly done | Done | Early stage | Not planned |
+| [Oberheim Xpander](https://github.com/m1macrophage/mamefork/blob/master/src/mame/oberheim/xpander.cpp) | Mostly done | Far along | Early stage | Not planned | Not planned |
+| [Oberheim OB8](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/ob8.cpp) | Early stage | Early stage | Not started | Not planned | Not planned |
+| [Oberheim DMX](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/dmx.cpp) | Done | Done | Done | Mostly done | Mostly done |
+| [Linn LinnDrum](https://github.com/mamedev/mame/blob/master/src/mame/linn/linndrum.cpp) | Far along | Far along | Early stage | Early stage | Early stage |
+| [Alesis MIDIverb](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp)  | Done | N/A | Done | N/A | Done |
 
 Legend:
 * **Digital**: Documentation state of the computer(s) used to to control the synth (UI, voice control). Does not include DSPs.
