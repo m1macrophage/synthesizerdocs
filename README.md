@@ -21,7 +21,7 @@ If you are looking to make music, these drivers are not for you.
 
 ## Status
 
-**Current focus**: DMX, LinnDrum.
+**Current focus**: LinnDrum.
 
 Status of other work:
 
