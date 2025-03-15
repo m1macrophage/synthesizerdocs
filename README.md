@@ -34,7 +34,7 @@ Status of other work:
 | [Oberheim Xpander](https://github.com/m1macrophage/mamefork/blob/master/src/mame/oberheim/xpander.cpp) | Mostly done | Far along | Early stage | Not planned | Not planned |
 | [Oberheim OB8](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/ob8.cpp) | Early stage | Early stage | Not started | Not planned | Not planned |
 | [Oberheim DMX](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/dmx.cpp) (early version) | Done | Done | Done | Done | Done |
-| [Linn LinnDrum](https://github.com/mamedev/mame/blob/master/src/mame/linn/linndrum.cpp) | Far along | Far along | Early stage | Early stage | Early stage |
+| [Linn LinnDrum](https://github.com/mamedev/mame/blob/master/src/mame/linn/linndrum.cpp) | Done | Far along | Done | Early stage | Partially done |
 | [Alesis MIDIverb](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp)  | Done | N/A | Done | N/A | Done |
 
 Legend:
