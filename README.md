@@ -21,21 +21,21 @@ If you are looking to make music, these drivers are not for you.
 
 ## Status
 
-**Current focus**: Improving drivers below, extracting common functionality.
+**Current focus**: TR-707
 
 Status of other work:
 
 | System | Digital | Digital-analog interface | Interactive layout | Full DC | Audio |
 |---|---|---|---|---|---|
-| [Moog Source](https://github.com/mamedev/mame/blob/master/src/mame/moog/source.cpp) | Done | Far along | Done | Not planned | Not planned |
-| [Moog Memorymoog](https://github.com/mamedev/mame/blob/master/src/mame/moog/memorymoog.cpp) | Done | Far along | Not started | Not planned | Not planned |
-| [Paia MIDI2CV8](https://github.com/mamedev/mame/blob/master/src/mame/paia/midi2cv8.cpp) | Done | Done | Done | Mostly done | N/A |
-| [Paia Fatman](https://github.com/mamedev/mame/blob/master/src/mame/paia/fatman.cpp) | Done | Mostly done | Done | Early stage | Not planned |
-| [Oberheim Xpander](https://github.com/m1macrophage/mamefork/blob/master/src/mame/oberheim/xpander.cpp) | Mostly done | Far along | Early stage | Not planned | Not planned |
-| [Oberheim OB8](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/ob8.cpp) | Early stage | Early stage | Not started | Not planned | Not planned |
-| [Oberheim DMX](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/dmx.cpp) (early version) | Done | Done | Done | Done | Done |
-| [Linn LinnDrum](https://github.com/mamedev/mame/blob/master/src/mame/linn/linndrum.cpp) | Done | Far along | Done | Far along | Almost done |
-| [Alesis MIDIverb](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp)  | Done | N/A | Done | N/A | Done |
+| [Moog Source](https://github.com/mamedev/mame/blob/master/src/mame/moog/source.cpp) | Yes | Extensive | Yes | Minimal | No |
+| [Moog Memorymoog](https://github.com/mamedev/mame/blob/master/src/mame/moog/memorymoog.cpp) | Yes | Partial | No | No | No |
+| [Paia MIDI2CV8](https://github.com/mamedev/mame/blob/master/src/mame/paia/midi2cv8.cpp) | Yes | Yes | Yes | Extensive | N/A |
+| [Paia Fatman](https://github.com/mamedev/mame/blob/master/src/mame/paia/fatman.cpp) | Yes | Extensive | Yes | Minimal | No |
+| [Oberheim Xpander](https://github.com/m1macrophage/mamefork/blob/master/src/mame/oberheim/xpander.cpp) | Extensive | Partial | Minimal | No | No |
+| [Oberheim OB8](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/ob8.cpp) | Minimal | Minimal | No | No | No |
+| [Oberheim DMX](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/dmx.cpp) (early version) | Yes | Yes | Yes | Yes | Yes |
+| [Linn LinnDrum](https://github.com/mamedev/mame/blob/master/src/mame/linn/linndrum.cpp) | Yes | Extensive | Yes | Extensive | Extensive |
+| [Alesis MIDIverb](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp)  | Yes | N/A | Yes | N/A | Yes |
 
 Legend:
 * **Digital**: Documentation state of the computer(s) used to to control the synth (UI, voice control). Does not include DSPs.
