@@ -21,7 +21,7 @@ If you are looking to make music, these drivers are not for you.
 
 ## Status
 
-**Current focus**: TR-707
+**Current focus**: Preliminary documentation for the Six-Trak and Prophet5. 
 
 Status of other work:
 
