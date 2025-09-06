@@ -21,7 +21,7 @@ If you are looking to make music, these drivers are not for you.
 
 ## Status
 
-**Current focus**: Preliminary documentation for the Six-Trak and Prophet5. 
+**Current focus**: misc improvements.
 
 Status of other work:
 
@@ -36,6 +36,9 @@ Status of other work:
 | [Oberheim DMX](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/dmx.cpp) (early version) | Yes | Yes | Yes | Yes | Yes |
 | [Linn LinnDrum](https://github.com/mamedev/mame/blob/master/src/mame/linn/linndrum.cpp) | Yes | Extensive | Yes | Extensive | Extensive |
 | [Alesis MIDIverb](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp)  | Yes | N/A | Yes | N/A | Yes |
+| [Roland TR-707/727](https://github.com/mamedev/mame/blob/master/src/mame/roland/roland_tr707.cpp) | Yes | Extensive | Yes | Yes | Yes |
+| [Sequential Six-Trak](https://github.com/mamedev/mame/blob/master/src/mame/sequential/sixtrak.cpp) | Yes | Yes | No | Minimal | No |
+| [Sequential Prophet 5](https://github.com/mamedev/mame/blob/master/src/mame/sequential/prophet5.cpp) | Yes | Extensive | No | No | No |
 
 Legend:
 * **Digital**: Documentation state of the computer(s) used to to control the synth (UI, voice control). Does not include DSPs.
