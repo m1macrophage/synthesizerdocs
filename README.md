@@ -21,7 +21,7 @@ If you are looking to make music, these drivers are not for you.
 
 ## Status
 
-**Current focus**: misc improvements.
+**Current focus**: sixtrak, analog chips.
 
 Status of other work:
 
@@ -29,14 +29,14 @@ Status of other work:
 |---|---|---|---|---|---|
 | [Moog Source](https://github.com/mamedev/mame/blob/master/src/mame/moog/source.cpp) | Yes | Extensive | Yes | Minimal | No |
 | [Moog Memorymoog](https://github.com/mamedev/mame/blob/master/src/mame/moog/memorymoog.cpp) | Yes | Partial | No | No | No |
-| [Paia MIDI2CV8](https://github.com/mamedev/mame/blob/master/src/mame/paia/midi2cv8.cpp) | Yes | Yes | Yes | Extensive | N/A |
-| [Paia Fatman](https://github.com/mamedev/mame/blob/master/src/mame/paia/fatman.cpp) | Yes | Extensive | Yes | Minimal | No |
+| [Paia MIDI2CV8](https://github.com/mamedev/mame/blob/master/src/mame/paia/midi2cv8.cpp) | Yes | Yes | Yes | Yes | N/A |
+| [Paia Fatman](https://github.com/mamedev/mame/blob/master/src/mame/paia/fatman.cpp) | Yes | Yes | Yes | Minimal | No |
 | [Oberheim Xpander](https://github.com/m1macrophage/mamefork/blob/master/src/mame/oberheim/xpander.cpp) | Extensive | Partial | Minimal | No | No |
 | [Oberheim OB8](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/ob8.cpp) | Minimal | Minimal | No | No | No |
 | [Oberheim DMX](https://github.com/mamedev/mame/blob/master/src/mame/oberheim/dmx.cpp) (early version) | Yes | Yes | Yes | Yes | Yes |
-| [Linn LinnDrum](https://github.com/mamedev/mame/blob/master/src/mame/linn/linndrum.cpp) | Yes | Extensive | Yes | Extensive | Extensive |
-| [Alesis MIDIverb](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp)  | Yes | N/A | Yes | N/A | Yes |
-| [Roland TR-707/727](https://github.com/mamedev/mame/blob/master/src/mame/roland/roland_tr707.cpp) | Yes | Extensive | Yes | Yes | Yes |
+| [Linn LinnDrum](https://github.com/mamedev/mame/blob/master/src/mame/linn/linndrum.cpp) | Yes | Extensive | Yes | Yes | Extensive |
+| [Alesis MIDIverb / MIDIFEX](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp)  | Yes | N/A | Yes | N/A | Yes |
+| [Roland TR-707 / TR-727](https://github.com/mamedev/mame/blob/master/src/mame/roland/roland_tr707.cpp) | Yes | Extensive | Yes | Yes | Yes |
 | [Sequential Six-Trak](https://github.com/mamedev/mame/blob/master/src/mame/sequential/sixtrak.cpp) | Yes | Yes | No | Minimal | No |
 | [Sequential Prophet 5](https://github.com/mamedev/mame/blob/master/src/mame/sequential/prophet5.cpp) | Yes | Extensive | No | No | No |
 
