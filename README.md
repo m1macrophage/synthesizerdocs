@@ -21,7 +21,7 @@ If you are looking to make music, these drivers are not for you.
 
 ## Status
 
-**Current focus**: sixtrak, analog chips.
+**Current focus**: Prophet 5, analog chips.
 
 Status of other work:
 
@@ -37,7 +37,7 @@ Status of other work:
 | [Linn LinnDrum](https://github.com/mamedev/mame/blob/master/src/mame/linn/linndrum.cpp) | Yes | Extensive | Yes | Yes | Extensive |
 | [Alesis MIDIverb / MIDIFEX](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp)  | Yes | N/A | Yes | N/A | Yes |
 | [Roland TR-707 / TR-727](https://github.com/mamedev/mame/blob/master/src/mame/roland/roland_tr707.cpp) | Yes | Extensive | Yes | Yes | Yes |
-| [Sequential Six-Trak](https://github.com/mamedev/mame/blob/master/src/mame/sequential/sixtrak.cpp) | Yes | Yes | No | Minimal | No |
+| [Sequential Six-Trak](https://github.com/mamedev/mame/blob/master/src/mame/sequential/sixtrak.cpp) | Yes | Yes | Yes | Yes | Yes |
 | [Sequential Prophet 5](https://github.com/mamedev/mame/blob/master/src/mame/sequential/prophet5.cpp) | Yes | Extensive | No | No | No |
 
 Legend:
