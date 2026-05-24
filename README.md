@@ -21,7 +21,7 @@ If you are looking to make music, these drivers are not for you.
 
 ## Status
 
-**Current focus**: Prophet 5, analog chips.
+**Current focus**: misc cleanup and improvements
 
 Status of other work:
 
@@ -38,7 +38,7 @@ Status of other work:
 | [Alesis MIDIverb / MIDIFEX](https://github.com/mamedev/mame/blob/master/src/mame/alesis/midiverb.cpp)  | Yes | N/A | Yes | N/A | Yes |
 | [Roland TR-707 / TR-727](https://github.com/mamedev/mame/blob/master/src/mame/roland/roland_tr707.cpp) | Yes | Extensive | Yes | Yes | Yes |
 | [Sequential Six-Trak](https://github.com/mamedev/mame/blob/master/src/mame/sequential/sixtrak.cpp) | Yes | Yes | Yes | Yes | Yes |
-| [Sequential Prophet 5](https://github.com/mamedev/mame/blob/master/src/mame/sequential/prophet5.cpp) | Yes | Extensive | No | No | No |
+| [Sequential Prophet 5](https://github.com/mamedev/mame/blob/master/src/mame/sequential/prophet5.cpp) | Yes | Extensive | Yes | Yes | Yes |
 
 Legend:
 * **Digital**: Documentation state of the computer(s) used to to control the synth (UI, voice control). Does not include DSPs.
