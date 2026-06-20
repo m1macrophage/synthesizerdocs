@@ -2,8 +2,11 @@
 # copyright-holders:m1macrophage
 
 # Proof-of-concept implementation of a band-limitted oscillator, including
-# support for sync. Intended for experimentation and verification of the
-# relevant algorithms.
+# support for sync.
+#
+# Intended for quick experimentation and verification of the relevant algorithms.
+# Not well-documented, nor efficient. The production variant of this is:
+# https://github.com/mamedev/mame/blob/master/src/devices/sound/va_vco.cpp
 
 DEBUG_LEVEL <- 0
 LOG_DISC <- 1
@@ -18,6 +21,7 @@ debuglog <- function(level, ...)
 # But removed the baked-in scale factor of 2, and made it configurable.
 poly_blep <- function(phase, step, height)
 {
+	# if (!((phase >= 1 - step && phase < 1) || (phase >= 0 && phase <= step))) return (0)
 	stopifnot((phase >= 1 - step && phase < 1) || (phase >= 0 && phase <= step))
 	t <- phase / step
 	pb1 <- height * (t - 0.5 * t * t - 0.5)
@@ -66,14 +70,66 @@ poly_blamp <- function(phase, step)
 
 }
 
+check_disc <- function(osc_phase, step, sync_info, label, sample, disc_phase_fn, ...)
+{
+	# Is there a discontinuity before the next sample?
+	disc_phase <- disc_phase_fn(osc_phase, ...)
+	disc <- will_wrap(disc_phase, step)
+	if (disc) debuglog(LOG_DISC, '-', label, ': disc', sample, '\n')
+
+	post_sync_disc_phase <- 0
+	post_sync_disc <- F
+
+	if (!is.null(sync_info))
+	{
+		# If a discontinuity is also scheduled, it should be ignored if the sync occurs first.
+		if (disc && sync_info$ttr < time_to_reset(disc_phase, step))
+			disc <- F
+
+		# Did the sync place the oscillator's phase right before a discontinuity?
+		# This will be very rare for SYNC_RESET.
+		post_sync_disc_phase <- disc_phase_fn(sync_info$adj_phase, ...)
+		new_phase_at_sync <- disc_phase_fn(sync_info$new_phase_at_sync, ...)
+		if (will_wrap(post_sync_disc_phase, step) && will_wrap(new_phase_at_sync, step))
+		{
+			post_sync_disc <- T
+			debuglog(LOG_DISC, '-', label, ': post-sync', sample, '\n')
+
+			# Not useful calculations. Just consistency checks.
+			delta <- (disc_phase_fn(sync_info$phase_at_sync, ...) - disc_phase) %% 1 + (1 - new_phase_at_sync)
+			stopifnot(delta > 0 && delta < step)
+			second_phase <- 1 - delta
+			stopifnot(all.equal(disc_phase_fn(sync_info$adj_phase, ...), second_phase))
+		}
+	}
+
+	return (list(disc=disc,
+	             disc_phase=disc_phase,
+	             post_sync_disc=post_sync_disc,
+	             post_sync_disc_phase=post_sync_disc_phase))
+}
+
 ramp <- function(phase)
 {
 	return (2 * phase - 1)
 }
 
-pulse <- function(phase, pw)
+pulse <- function(phase, pw, dc_comp)
 {
-	return (ifelse(phase < pw, 1, -1))
+	wave <- ifelse(phase < pw, 1, -1)
+	if (dc_comp) wave <- wave - 2 * (pw - 0.5)
+	return (wave)
+}
+
+tri_pulse <- function(phase, pw, dc_comp)
+{
+	return (pulse(tri_pulse_up_phase(phase, pw), pw, dc_comp))
+}
+
+# Converts from [-1, 1] to [xrange[1], xrange[2]]
+transform <- function(x, xrange)
+{
+	return((xrange[2] - xrange[1]) * (x + 1) / 2 + xrange[1])
 }
 
 triangle <- function(phase)
@@ -81,9 +137,29 @@ triangle <- function(phase)
 	return (1 - 2 * abs(ramp(phase)))
 }
 
-pw_phase <- function(phase, pw)
+reset_phase <- function(phase)
+{
+	return (phase)
+}
+
+midpulse_phase <- function(phase, pw)
 {
 	return ((phase + (1 - pw)) %% 1)
+}
+
+tritop_phase <- function(phase)
+{
+	return (midpulse_phase(phase, 0.5))
+}
+
+tri_pulse_up_phase <- function(phase, pw)
+{
+	return ((phase + pw / 2) %% 1)
+}
+
+tri_pulse_down_phase <- function(phase, pw)
+{
+	return ((phase + 1 - pw / 2) %% 1)
 }
 
 will_wrap <- function(phase, step)
@@ -98,7 +174,7 @@ time_to_reset <- function(phase, step)  # time to discontinuity, in samples.
 
 
 SYNC_RESET <- 0
-SYNC_FLIP <- 1
+SYNC_REVERSE <- 1
 
 SHAPE_TRI <- 0
 SHAPE_RAMP <- 1
@@ -114,7 +190,7 @@ SHAPE_PULSE <- 2
 #
 # The bulk of the code deals with tracking all possible discontinuities,
 # which gets complicated with oscillator sync.
-osc <- function(samples, sample_rate, freq, sfreq, pw=0.5, sync=T, shape=SHAPE_RAMP, sync_type=SYNC_FLIP)
+osc <- function(samples, sample_rate, freq, sfreq, pw=0.5, sync=T, shape=SHAPE_RAMP, wav_range=c(-1, 1), pulse_dc_comp=F, pulse_from_tri=F, sync_type=SYNC_REVERSE)
 {
 	APPLY_NORM <- T
 	APPLY_SYNC <- T
@@ -140,159 +216,159 @@ osc <- function(samples, sample_rate, freq, sfreq, pw=0.5, sync=T, shape=SHAPE_R
 	for (i in 1:samples)
 	{
 		old_phase <- phase
-		post_sync_reset <- F
 
 		before_sync <- sync && will_wrap(sphase, sstep)
 		if (before_sync) debuglog(LOG_DISC, 'Sync:', i, phase, sphase, '\n')
 
-		before_reset <- F
-		if (will_wrap(old_phase, step))
-		{
-			before_reset <- T
-			debuglog(LOG_DISC, 'Reset:', i, old_phase, sphase, '\n')
-		}
-
+		sync_info <- NULL
 		if (before_sync)
 		{
 			sync_ttr <- time_to_reset(sphase, sstep)
 
-			if (before_reset)
-			{
-				if (sync_ttr < time_to_reset(old_phase, step)) { before_reset <- F }
-				else { debuglog(LOG_DISC, '- Overlapping reset', i, '\n') }
-			}
-
 			phase_at_sync <- (phase + sync_ttr * step) %% 1
 			if (sync_type == SYNC_RESET)
-			{
 				new_phase_at_sync <- 0
-				sync_phase <- 1 - (phase_at_sync - phase) %% 1
-				phase <- sync_phase
-			}
-			else if (sync_type == SYNC_FLIP)
-			{
-				# A reflection around 0.5.
-				new_phase_at_sync <- 1 - phase_at_sync
-				delta <- (phase_at_sync - phase) %% 1
-				sync_phase <- 1 - delta
-				phase <- (new_phase_at_sync - delta) %% 1
-			}
+			else if (sync_type == SYNC_REVERSE)
+				new_phase_at_sync <- 1 - phase_at_sync  # Horizontal reflection around 0.5.
+			else stopifnot(F)
 
-			# Technically only needed for SYNC_FLIP, but exercising logic in SYNC_RESET too.
-			if (will_wrap(phase, step) && will_wrap(new_phase_at_sync, step))
-			{
-				debuglog(LOG_DISC, '- Post-sync reset', i, '\n')
-				delta <- (phase_at_sync - old_phase) %% 1 + (1 - new_phase_at_sync)
-				stopifnot(delta > 0 && delta < step)
-				second_phase <- 1 - delta
-				stopifnot(all.equal(phase, second_phase))
-				post_sync_reset <- T
-			}
+			delta <- (phase_at_sync - old_phase) %% 1
+			sync_phase <- 1 - delta
+			phase <- (new_phase_at_sync - delta) %% 1
+
+			sync_info <- list(
+				ttr=sync_ttr,
+				phase_at_sync=phase_at_sync,
+				new_phase_at_sync=new_phase_at_sync,
+				adj_phase=phase)
 		}
+
+		reset <- check_disc(old_phase, step, sync_info, 'reset', i, reset_phase)
 
 		if (shape == SHAPE_RAMP)
 		{
 			r <- ramp(old_phase) + rcorr
 			rcorr <- 0
 
-			if (before_sync)
+			if (APPLY_NORM && reset$disc)
 			{
-				if (APPLY_SYNC)
-				{
-					ramp_sync_jump <- ramp(new_phase_at_sync) - ramp(phase_at_sync)
-					r <- r + poly_blep(sync_phase, step, ramp_sync_jump)
-					rcorr <- rcorr + poly_blep((sync_phase + step) %% 1, step, ramp_sync_jump)
-				}
-
-				if (APPLY_POST_SYNC && post_sync_reset)
-				{
-					r <- r + poly_blep(phase, step, RAMP_RESET_JUMP)
-					rcorr <- rcorr + poly_blep((phase + step) %% 1, step, RAMP_RESET_JUMP)
-				}
+				r <- r + poly_blep(reset$disc_phase, step, RAMP_RESET_JUMP)
+				rcorr <- rcorr + poly_blep((reset$disc_phase + step) %% 1, step, RAMP_RESET_JUMP)
 			}
 
-			if (APPLY_NORM && before_reset)
+			if (APPLY_SYNC && before_sync)
 			{
-				r <- r + poly_blep(old_phase, step, RAMP_RESET_JUMP)
-				rcorr <- rcorr + poly_blep((old_phase + step) %% 1, step, RAMP_RESET_JUMP)
+				ramp_sync_jump <- ramp(new_phase_at_sync) - ramp(phase_at_sync)
+				r <- r + poly_blep(sync_phase, step, ramp_sync_jump)
+				rcorr <- rcorr + poly_blep((sync_phase + step) %% 1, step, ramp_sync_jump)
 			}
 
-			result[i] <- r
+			if (APPLY_POST_SYNC && reset$post_sync_disc)
+			{
+				r <- r + poly_blep(reset$post_sync_disc_phase, step, RAMP_RESET_JUMP)
+				rcorr <- rcorr + poly_blep((reset$post_sync_disc_phase + step) %% 1, step, RAMP_RESET_JUMP)
+			}
+
+			result[i] <- transform(r, wav_range)
 		}
-		else if (shape == SHAPE_PULSE)
+		else if (shape == SHAPE_PULSE && pulse_from_tri)
 		{
-			p <- pulse(old_phase, pw) + pcorr
+			reset <- check_disc(old_phase, step, sync_info, 'tri_pulse_up', i, tri_pulse_up_phase, pw=pw)
+			flip <- check_disc(old_phase, step, sync_info, 'tri_pulse_down', i, tri_pulse_down_phase, pw=pw)
+
+			p <- tri_pulse(old_phase, pw, pulse_dc_comp) + pcorr
 			pcorr <- 0
-
-			midpulse_phase <- pw_phase(old_phase, pw)
-
-			before_midpulse <- F
-			if (will_wrap(midpulse_phase, step))
-			{
-				before_midpulse <- T
-				debuglog(LOG_DISC, 'Pulse flip:', i, old_phase, sphase, '\n')
-			}
-
-			if (before_reset && before_midpulse) debuglog(LOG_DISC, '- Both flip and reset', i, '\n')
-
-			if (before_sync)
-			{
-				if (before_midpulse)
-				{
-					if (sync_ttr < time_to_reset(midpulse_phase, step)) { before_midpulse <- F }
-					else { debuglog(LOG_DISC, '- Overlaping pulse flip', i, ' - ', phase, midpulse_phase, '\n') }
-				}
-
-				# Only really needed for SYNC_FLIP
-				post_sync_midpulse <- F
-				if (will_wrap(pw_phase(phase, pw), step) && will_wrap(pw_phase(new_phase_at_sync, pw), step))
-				{
-					debuglog(LOG_DISC, '- Post-sync pulse flip', i, '\n')
-					delta <- (pw_phase(phase_at_sync, pw) - pw_phase(old_phase, pw)) %% 1 + (1 - pw_phase(new_phase_at_sync, pw))
-					stopifnot(delta > 0 && delta < step)
-					second_pulse_phase <- 1 - delta
-					stopifnot(all.equal(pw_phase(phase, pw), second_pulse_phase))
-					post_sync_midpulse <- T
-				}
-
-				if (APPLY_SYNC)
-				{
-					pulse_sync_jump <- pulse(new_phase_at_sync, pw) - pulse(phase_at_sync, pw)
-					p <- p + poly_blep(sync_phase, step, pulse_sync_jump)
-					pcorr <- pcorr + poly_blep((sync_phase + step) %% 1, step, pulse_sync_jump)
-				}
-
-				if (APPLY_POST_SYNC)
-				{
-					if (post_sync_reset)
-					{
-						p <- p + poly_blep(phase, step, PULSE_RESET_JUMP)
-						pcorr <- pcorr + poly_blep((phase + step) %% 1, step, PULSE_RESET_JUMP)
-					}
-					if (post_sync_midpulse)
-					{
-						second_pulse_phase <- pw_phase(phase, pw)
-						p <- p + poly_blep(second_pulse_phase, step, PULSE_FLIP_JUMP)
-						pcorr <- pcorr + poly_blep((second_pulse_phase + step) %% 1, step, PULSE_FLIP_JUMP)
-					}
-				}
-			}
 
 			if (APPLY_NORM)
 			{
-				if (before_reset)
+				if (reset$disc)
 				{
-					p <- p + poly_blep(old_phase, step, PULSE_RESET_JUMP)
-					pcorr <- pcorr + poly_blep((old_phase + step) %% 1, step, PULSE_RESET_JUMP)
+					p <- p + poly_blep(reset$disc_phase, step, PULSE_RESET_JUMP)
+					pcorr <- pcorr + poly_blep((reset$disc_phase + step) %% 1, step, PULSE_RESET_JUMP)
 				}
-				if (before_midpulse)
+				if (flip$disc)
 				{
-					p <- p + poly_blep(midpulse_phase, step, PULSE_FLIP_JUMP)
-					pcorr <- pcorr + poly_blep((midpulse_phase + step) %% 1, step, PULSE_FLIP_JUMP)
+					p <- p + poly_blep(flip$disc_phase, step, PULSE_FLIP_JUMP)
+					pcorr <- pcorr + poly_blep((flip$disc_phase + step) %% 1, step, PULSE_FLIP_JUMP)
 				}
 			}
 
-			result[i] <- p
+			if (APPLY_SYNC && before_sync)
+			{
+				pulse_sync_jump <- tri_pulse(new_phase_at_sync, pw, pulse_dc_comp) - tri_pulse(phase_at_sync, pw, pulse_dc_comp)
+				if (sync_type == SYNC_REVERSE)
+				{
+					# The jump due to a sync is guaranteed to be 0 for a triangle-derived
+					# pulse wave. So no correction is required.
+					stopifnot(all.equal(pulse_sync_jump, 0))
+				}
+				else
+				{
+					p <- p + poly_blep(sync_phase, step, pulse_sync_jump)
+					pcorr <- pcorr + poly_blep((sync_phase + step) %% 1, step, pulse_sync_jump)
+				}
+			}
+
+			if (APPLY_POST_SYNC)
+			{
+				if (reset$post_sync_disc)
+				{
+					p <- p + poly_blep(reset$post_sync_disc_phase, step, PULSE_RESET_JUMP)
+					pcorr <- pcorr + poly_blep((reset$post_sync_disc_phase + step) %% 1, step, PULSE_RESET_JUMP)
+				}
+				if (flip$post_sync_disc)
+				{
+					p <- p + poly_blep(flip$post_sync_disc_phase, step, PULSE_FLIP_JUMP)
+					pcorr <- pcorr + poly_blep((flip$post_sync_disc_phase + step) %% 1, step, PULSE_FLIP_JUMP)
+				}
+			}
+
+			result[i] <- transform(p, wav_range)
+		}
+		else if (shape == SHAPE_PULSE && !pulse_from_tri)
+		{
+			flip <- check_disc(old_phase, step, sync_info, 'midpulse', i, midpulse_phase, pw=pw)
+			if (reset$disc && flip$disc) debuglog(LOG_DISC, '- Both flip and reset', i, '\n')
+
+			p <- pulse(old_phase, pw, pulse_dc_comp) + pcorr
+			pcorr <- 0
+
+			if (APPLY_NORM)
+			{
+				if (reset$disc)
+				{
+					p <- p + poly_blep(reset$disc_phase, step, PULSE_RESET_JUMP)
+					pcorr <- pcorr + poly_blep((reset$disc_phase + step) %% 1, step, PULSE_RESET_JUMP)
+				}
+				if (flip$disc)
+				{
+					p <- p + poly_blep(flip$disc_phase, step, PULSE_FLIP_JUMP)
+					pcorr <- pcorr + poly_blep((flip$disc_phase + step) %% 1, step, PULSE_FLIP_JUMP)
+				}
+			}
+
+			if (APPLY_SYNC && before_sync)
+			{
+				pulse_sync_jump <- pulse(new_phase_at_sync, pw, pulse_dc_comp) - pulse(phase_at_sync, pw, pulse_dc_comp)
+				p <- p + poly_blep(sync_phase, step, pulse_sync_jump)
+				pcorr <- pcorr + poly_blep((sync_phase + step) %% 1, step, pulse_sync_jump)
+			}
+
+			if (APPLY_POST_SYNC)
+			{
+				if (reset$post_sync_disc)
+				{
+					p <- p + poly_blep(reset$post_sync_disc_phase, step, PULSE_RESET_JUMP)
+					pcorr <- pcorr + poly_blep((reset$post_sync_disc_phase + step) %% 1, step, PULSE_RESET_JUMP)
+				}
+				if (flip$post_sync_disc)
+				{
+					p <- p + poly_blep(flip$post_sync_disc_phase, step, PULSE_FLIP_JUMP)
+					pcorr <- pcorr + poly_blep((flip$post_sync_disc_phase + step) %% 1, step, PULSE_FLIP_JUMP)
+				}
+			}
+
+			result[i] <- transform(p, wav_range)
 		}
 		else if (shape == SHAPE_TRI)
 		{
@@ -300,80 +376,64 @@ osc <- function(samples, sample_rate, freq, sfreq, pw=0.5, sync=T, shape=SHAPE_R
 			#       would be better, but only makes a tiny difference and would
 			#       complicate the sync handling code a lot.
 
+			flip <- check_disc(old_phase, step, sync_info, 'tritop', i, tritop_phase)
+
 			tri <- triangle(old_phase) + tcorr
 			tcorr <- 0
 
-			tritop_phase <- pw_phase(old_phase, 0.5)
-
-			before_tritop <- F
-			if (will_wrap(tritop_phase, step))
-			{
-				before_tritop <- T
-				debuglog(LOG_DISC, 'Triangle flip:', i, old_phase, sphase, '\n')
-			}
-
-			if (before_sync)
-			{
-				if (before_tritop)
-				{
-					if (sync_ttr < time_to_reset(tritop_phase, step)) { before_tritop <- F }
-					else { debuglog(LOG_DISC, '- Overlapping triangle flip', i, ' - ', old_phase, tritop_phase, '\n') }
-				}
-
-				# Technically only needed for SYNC_FLIP.
-				post_sync_tritop <- F
-				if (will_wrap(pw_phase(phase, 0.5), step) && will_wrap(pw_phase(new_phase_at_sync, 0.5), step))
-				{
-					debuglog(LOG_DISC, '- Post-sync triangle flip', i, '\n')
-					delta <- (pw_phase(phase_at_sync, 0.5) - pw_phase(old_phase, 0.5)) %% 1 + (1 - pw_phase(new_phase_at_sync, 0.5))
-					stopifnot(delta > 0 && delta < step)
-					second_tritop_phase <- 1 - delta
-					stopifnot(all.equal(pw_phase(phase, 0.5), second_tritop_phase))
-					post_sync_tritop <- T
-				}
-
-				if (APPLY_SYNC)
-				{
-					stopifnot(!before_reset || !before_tritop)
-					if (before_reset) { sync_dir <- TRI_TOP }
-					else if (before_tritop) { sync_dir <- TRI_BOTTOM }
-					else { sync_dir <- ifelse(old_phase < 0.5, TRI_TOP, TRI_BOTTOM) }
-
-					tri <- tri + sync_dir * poly_blamp(1 - sync_phase, step)
-					tcorr[1] <- tcorr[1] + sync_dir * poly_blamp((sync_phase + step) %% 1, step)
-				}
-
-				if (APPLY_POST_SYNC)
-				{
-					if (post_sync_reset)
-					{
-						tri <- tri + TRI_BOTTOM * poly_blamp(1 - phase, step)
-						tcorr[1] <- tcorr[1] + TRI_BOTTOM * poly_blamp((phase + step) %% 1, step)
-					}
-					if (post_sync_tritop)
-					{
-						second_tritop_phase <- pw_phase(phase, 0.5)
-						tri <- tri + TRI_TOP * poly_blamp(1 - second_tritop_phase, step)
-						tcorr[1] <- tcorr[1] + TRI_TOP * poly_blamp((second_tritop_phase + step) %% 1, step)
-					}
-				}
-			}
-
 			if (APPLY_NORM)
 			{
-				if (before_reset)
+				if (reset$disc)
 				{
-					tri <- tri + TRI_BOTTOM * poly_blamp(1 - old_phase, step)
-					tcorr[1] <- tcorr[1] + TRI_BOTTOM * poly_blamp((old_phase + step) %% 1, step)
+					tri <- tri + TRI_BOTTOM * poly_blamp(1 - reset$disc_phase, step)
+					tcorr <- tcorr + TRI_BOTTOM * poly_blamp((reset$disc_phase + step) %% 1, step)
 				}
-				if (before_tritop)
+				if (flip$disc)
 				{
-					tri <- tri + TRI_TOP * poly_blamp(1 - tritop_phase, step)
-					tcorr[1] <- tcorr[1] + TRI_TOP * poly_blamp((tritop_phase + step) %% 1, step)
+					tri <- tri + TRI_TOP * poly_blamp(1 - flip$disc_phase, step)
+					tcorr <- tcorr + TRI_TOP * poly_blamp((flip$disc_phase + step) %% 1, step)
 				}
 			}
 
-			result[i] <- tri
+			if (APPLY_SYNC && before_sync)
+			{
+				if (sync_type == SYNC_REVERSE)
+				{
+					stopifnot(!reset$disc || !flip$disc)
+					if (reset$disc)
+						sync_dir <- TRI_TOP
+					else if (flip$disc)
+						sync_dir <- TRI_BOTTOM
+					else
+						sync_dir <- ifelse(old_phase < 0.5, TRI_TOP, TRI_BOTTOM)
+
+					tri <- tri + sync_dir * poly_blamp(1 - sync_phase, step)
+					tcorr <- tcorr + sync_dir * poly_blamp((sync_phase + step) %% 1, step)
+				}
+				else
+				{
+					stopifnot(sync_type == SYNC_RESET)
+					sync_jump <- triangle(new_phase_at_sync) - triangle(phase_at_sync)
+					tri <- tri + poly_blep(sync_phase, step, sync_jump)
+					tcorr <- tcorr + poly_blep((sync_phase + step) %% 1, step, sync_jump)
+				}
+			}
+
+			if (APPLY_POST_SYNC)
+			{
+				if (reset$post_sync_disc)
+				{
+					tri <- tri + TRI_BOTTOM * poly_blamp(1 - reset$post_sync_disc_phase, step)
+					tcorr <- tcorr + TRI_BOTTOM * poly_blamp((reset$post_sync_disc_phase + step) %% 1, step)
+				}
+				if (flip$post_sync_disc)
+				{
+					tri <- tri + TRI_TOP * poly_blamp(1 - flip$post_sync_disc_phase, step)
+					tcorr <- tcorr + TRI_TOP * poly_blamp((flip$post_sync_disc_phase + step) %% 1, step)
+				}
+			}
+
+			result[i] <- transform(tri, wav_range)
 		}
 		else
 		{
@@ -402,49 +462,73 @@ run_osc_test <- function(freq=1000, sfreq=800, samples=48000, fresh=T, zoom=F, .
 	sample_rate <- 48000
 	w <- osc(samples, sample_rate, freq, sfreq, ...)
 
-	if (fresh) { par(mfrow=c(1, 2)) }
+	if (fresh) par(mfrow=c(1, 2))
 	plot(w[1:min(100, samples)], type='b', cex=0.5, ylim=c(-1.1, 1.1))
 	plot_freq(w, zoom=zoom)
 }
 
-run_all_osc_tests <- function(shape=SHAPE_RAMP, zoom=F)
+run_all_osc_tests <- function(shape=SHAPE_RAMP, var=0, zoom=F, ...)
 {
 	par(mfrow=c(4, 2))
 
 	pw <- 0.5
+	pulse_from_tri <- F
 	if (shape == SHAPE_TRI)
 	{
-		freq <- 2050
-		sfreq <- c(1100, 1300, 1610, 2050)
-	}
-	else if (shape == SHAPE_TRI + 10)
-	{
-		freq <- 2050
-		sfreq <- c(2050, 2600, 3045, 4020)
+		if (var == 0)
+		{
+			freq <- 2050
+			sfreq <- c(1100, 1300, 1610, 2050)
+		}
+		else if (var == 1)
+		{
+			freq <- 2050
+			sfreq <- c(2050, 2600, 3045, 4020)
+		}
+		else stopifnot(F)
 	}
 	else if (shape == SHAPE_RAMP)
 	{
-		freq <- 2600
-		sfreq <- c(2300, 2400, 2500, 2600)
+		if (var == 0)
+		{
+			freq <- 2600
+			sfreq <- c(2300, 2400, 2500, 2600)
+		}
+		else stopifnot(F)
 	}
 	else if (shape == SHAPE_PULSE)
 	{
-		freq <- 2050
-		sfreq <- c(1355, 1200, 1700, 2050)
-	}
-	else if (shape == SHAPE_PULSE + 1)
-	{
-		pw <- 0.25
-		freq <- 2050
-		sfreq <- c(1100, 1300, 1610, 2050)
+		if (var == 0)
+		{
+			freq <- 2050
+			sfreq <- c(1355, 1200, 1700, 2050)
+		}
+		else if (var == 1)
+		{
+			pw <- 0.25
+			freq <- 2050
+			sfreq <- c(1100, 1300, 1610, 2050)
+		}
+		else if (var == 2)
+		{
+			pulse_from_tri <- T
+			freq <- 4000
+			sfreq <- c(2500, 2266.667, 3133.333, 4200)
+			# 2 and 3: test post-sync up and down transitions.
+		}
+		else if (var == 3)
+		{
+			pw <- 0.25
+			pulse_from_tri <- T
+			freq <- 3133.333
+			sfreq <- c(2500, 2700, 3566.667, 4200)
+			# 2 and 3: test post-sync up and down transition.
+		}
+		else stopifnot(F)
 	}
 
-	if (shape == 3) { shape <- 2 }
-	if (shape >= 10) { shape <- shape - 10 }
 	for (s in sfreq)
-	{
-		run_osc_test(freq, s, pw=pw, shape=shape, zoom=zoom, fresh=F)
-	}
+		run_osc_test(freq, s, pw=pw, shape=shape, pulse_from_tri=pulse_from_tri, zoom=zoom, fresh=F, ...)
 }
 
 # Intended to catch assertions.
