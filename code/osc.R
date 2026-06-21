@@ -204,6 +204,11 @@ osc <- function(samples, sample_rate, freq, sfreq, pw=0.5, sync=T, shape=SHAPE_R
 
 	result <- rep_len(0, samples)
 
+	out_ramp <- SHAPE_RAMP %in% shape
+	out_ramp_pulse <- SHAPE_PULSE %in% shape && !pulse_from_tri
+	out_tri_pulse <- SHAPE_PULSE %in% shape && pulse_from_tri
+	out_tri <- SHAPE_TRI %in% shape
+
 	step <- freq / sample_rate
 	phase <- 0#0.01
 	sstep <- sfreq / sample_rate
@@ -243,9 +248,10 @@ osc <- function(samples, sample_rate, freq, sfreq, pw=0.5, sync=T, shape=SHAPE_R
 				adj_phase=phase)
 		}
 
+		result[i] <- 0
 		reset <- check_disc(old_phase, step, sync_info, 'reset', i, reset_phase)
 
-		if (shape == SHAPE_RAMP)
+		if (out_ramp)
 		{
 			r <- ramp(old_phase) + rcorr
 			rcorr <- 0
@@ -269,9 +275,10 @@ osc <- function(samples, sample_rate, freq, sfreq, pw=0.5, sync=T, shape=SHAPE_R
 				rcorr <- rcorr + poly_blep((reset$post_sync_disc_phase + step) %% 1, step, RAMP_RESET_JUMP)
 			}
 
-			result[i] <- transform(r, wav_range)
+			result[i] <- result[i] + transform(r, wav_range)
 		}
-		else if (shape == SHAPE_PULSE && pulse_from_tri)
+
+		if (out_tri_pulse)
 		{
 			reset <- check_disc(old_phase, step, sync_info, 'tri_pulse_up', i, tri_pulse_up_phase, pw=pw)
 			flip <- check_disc(old_phase, step, sync_info, 'tri_pulse_down', i, tri_pulse_down_phase, pw=pw)
@@ -323,9 +330,10 @@ osc <- function(samples, sample_rate, freq, sfreq, pw=0.5, sync=T, shape=SHAPE_R
 				}
 			}
 
-			result[i] <- transform(p, wav_range)
+			result[i] <- result[i] + transform(p, wav_range)
 		}
-		else if (shape == SHAPE_PULSE && !pulse_from_tri)
+
+		if (out_ramp_pulse)
 		{
 			flip <- check_disc(old_phase, step, sync_info, 'midpulse', i, midpulse_phase, pw=pw)
 			if (reset$disc && flip$disc) debuglog(LOG_DISC, '- Both flip and reset', i, '\n')
@@ -368,9 +376,10 @@ osc <- function(samples, sample_rate, freq, sfreq, pw=0.5, sync=T, shape=SHAPE_R
 				}
 			}
 
-			result[i] <- transform(p, wav_range)
+			result[i] <- result[i] + transform(p, wav_range)
 		}
-		else if (shape == SHAPE_TRI)
+
+		if (out_tri)
 		{
 			# TODO: Only performing a 1-sample polyblamp correction. 2 samples
 			#       would be better, but only makes a tiny difference and would
@@ -433,11 +442,7 @@ osc <- function(samples, sample_rate, freq, sfreq, pw=0.5, sync=T, shape=SHAPE_R
 				}
 			}
 
-			result[i] <- transform(tri, wav_range)
-		}
-		else
-		{
-			stopifnot(F)
+			result[i] <- result[i] + transform(tri, wav_range)
 		}
 
 		sphase <- (sphase + sstep) %% 1
